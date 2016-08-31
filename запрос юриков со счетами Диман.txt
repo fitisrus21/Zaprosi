@@ -1,0 +1,61 @@
+if object_id('tempdb..#ClData ') is not null drop table #ClData 
+Create table #ClData  ( InstitutionID DSIDENTIFIER
+                       ,UName         varchar(max)
+                                     ,addr      varchar(max)
+                                     ,tel       varchar(max)
+                                     ,eMail     varchar(max)
+                                     ,GenDirName    varchar(max)
+                                     ,OkvedName          varchar(max)
+                                     ,StuffCount    varchar(6)             
+                      )
+
+
+INSERT INTO #ClData (InstitutionID, UName, addr, GenDirName, StuffCount) 
+select distinct i.InstitutionID, i.Name,  '',  isnull(f.Name, ''), ''
+
+from tResource r  
+     ,tInstitution i
+left join tUser f
+on i.InstitutionID = f.InstitutionID
+and f.DateEnd = '19000101'  
+and f.Priority = 1
+where i.PropDealPart = 1
+and i.BIC = ''
+and i.InstitutionID != 2000
+and  r.InstOwnerID = i.InstitutionID
+and  left(r.Brief, 2) = '40'
+and r.DateEnd = '19000101'
+and r.BalanceID = 2140
+
+
+upDate #ClData set addr = ia.Name
+from tInstAddress ia
+where ia.InstitutionID = #ClData.InstitutionID
+and ia.AddressTypeID in (5, 1)
+
+
+
+upDate #ClData set tel = isnull(ic1.Brief, '') 
+from tInstContact ic1
+       inner join  tContactType ct1 
+          on ct1.ContactTypeID = ic1.ContactTypeID
+      and ct1.ContactTypeID in( 1,2,3,4)     -- тел
+where ic1.InstitutionID = #ClData.InstitutionID
+
+upDate #ClData set eMail = isnull(ic1.Brief, '') 
+from tInstContact ic1
+       inner join  tContactType ct1 
+          on ct1.ContactTypeID = ic1.ContactTypeID
+      and ct1.ContactTypeID = 7     -- маил
+where ic1.InstitutionID = #ClData.InstitutionID
+
+update #ClData set OkvedName = (select Name from tReuterCode where TypeCodeID = 8
+and Brief = (select Reuters from tReuters where InstitutionID = #ClData.InstitutionID and TradingSysID = 8 and IsDefault = 1))
+
+
+--update #ClData set tel = isnull(tel, ''), eMail = isnull(eMail, ''), OkvedName = isnull(OkvedName, '')*/
+
+
+select * from #ClData
+
+

@@ -1,0 +1,30 @@
+
+select   i1.Name as'Наименование юр.лица', i1.Brief, i1.Address1 + ', тел:' + i1.Phone1 + ',' + i1.Phone2 + ', email:' + i1.EMail as 'Адрес и контактная информация (телефон, email)' , u.name as 'Генеральный директор',
+  isnull(r.Reuters + rc.Name,'') as 'Вид деятельности'
+
+from tInstitution     i1
+
+inner join tResource re
+on i1.InstitutionID=re.InstOwnerID
+and left(re.brief,2)='40'-- like ('40%')
+and re.BalanceID=2140
+and i1.PropDealPart=1
+and re.DateEnd='19000101'
+and re.InstOwnerID != 2000
+
+
+inner join tuser u
+on i1.InstitutionID=u.InstitutionID
+and u.Priority= (select top 1 u2.Priority from tuser u2, tInstitution i2 where i2.InstitutionID=u2.InstitutionID and u2.Priority=1 )
+and u.Failed=0
+ 
+
+left join
+ tReuters r
+on i1.InstitutionID=r.InstitutionID
+and r.TradingSysID=8
+and r.IsDefault=1
+--and i1.PropDealPart=1
+left join tReuterCode rc
+on r.Reuters=rc.Brief
+group by  rc.Name,r.Reuters, u.name, i1.EMail,i1.Phone2, i1.Phone1,  i1.Address1, i1.Brief,  i1.Name
